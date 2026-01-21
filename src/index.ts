@@ -1,5 +1,8 @@
 import "dotenv/config";
 
+const MIN_BRIGHTNESS = 10;
+const MAX_BRIGHTNESS = 1000;
+
 if (!process.env.BOT_TOKEN) {
     throw new Error("Missing BOT_TOKEN in environment variables");
 }
@@ -7,6 +10,24 @@ if (!process.env.BOT_TOKEN) {
 if (!process.env.USER_ID) {
     throw new Error("Missing USER_ID in environment variables");
 }
+
+if (!process.env.TUYA_ACCESS_ID || !process.env.TUYA_KEY || !process.env.TUYA_DEVICE_ID) {
+    throw new Error("Missing Tuya credentials in environment variables");
+}
+
+import sharp from "sharp";
+import convert from "color-convert";
+
+import {configureTuya, sendCommands} from "./tuya";
+
+configureTuya(process.env.TUYA_ACCESS_ID, process.env.TUYA_KEY, process.env.TUYA_DEVICE_ID)
+    .then(() => {
+        console.log("Tuya configured successfully.");
+    })
+    .catch((error) => {
+        console.error("Error configuring Tuya:", error);
+        process.exit(1);
+    });
 
 import {Client, GatewayIntentsString, Presence} from "discord.js";
 
@@ -53,7 +74,7 @@ client.on("presenceUpdate", (old_presence, new_presence) => {
     handle_presence(new_presence);
 });
 
-const handle_presence = (presence: Presence) => {
+const handle_presence = async (presence: Presence) => {
     // find spotify activity
     // TODO: pull from other art assets too, using priority system if multiple exist at once. create handlers for different services as overrides
     const spotify_activity = presence.activities.find(
@@ -64,15 +85,62 @@ const handle_presence = (presence: Presence) => {
         return;
     }
 
-    console.log(`User is listening to: ${spotify_activity.details} by ${spotify_activity.state}`);
+    console.log(`\nUser is listening to: ${spotify_activity.details} by ${spotify_activity.state}`);
 
     // pull album art
     const album_art_url = spotify_activity.assets?.largeImage
         ? spotify_activity.assets.largeImage.replace("spotify:", "https://i.scdn.co/image/")
         : null;
 
-    if (album_art_url) {
-        console.log(`Album art URL: ${album_art_url}`);
+    if (!album_art_url) {
+        return;
+    }
+
+    console.log(`Album art URL: ${album_art_url}`);
+
+    // download image
+    const image_response = await fetch(album_art_url);
+    const image_blob = await image_response.blob();
+    const image_buffer = Buffer.from(await image_blob.arrayBuffer());
+
+    // get dominant color from image
+    const image = sharp(image_buffer);
+    const {dominant} = await image.stats();
+
+    const r = Math.round(dominant.r);
+    const g = Math.round(dominant.g);
+    const b = Math.round(dominant.b);
+
+    console.log(`Dominant color: R:${r} G:${g} B:${b}`);
+
+    // convert to hsv
+    let [h, s, v] = convert.rgb.hsv(r, g, b);
+
+    // tuya wants h in 0-360, s and v in 0-1000
+    s = Math.round(s * 10);
+    v = Math.round(v * 10);
+
+    // clamp v to min and max brightness
+    v = Math.max(MIN_BRIGHTNESS * 10, Math.min(MAX_BRIGHTNESS * 10, v));
+
+    console.log(`HSV: H:${h} S:${s} V:${v}`);
+
+    // send to tuya
+    const response = await sendCommands([{
+        code: "colour_data_v2",
+        value: {h, s, v}
+    }]);
+
+    if (response.ok) {
+        // check success is true in response json
+        const response_json = await response.json();
+        if (response_json.success) {
+            console.log("Successfully sent color data to Tuya device.");
+        } else {
+            console.error("Tuya device responded with an error:", response_json.msg);
+        }
+    } else {
+        console.error("Failed to send color data to Tuya device:", await response.text());
     }
 }
 
