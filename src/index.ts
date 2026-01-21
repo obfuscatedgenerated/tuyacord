@@ -120,14 +120,38 @@ const handle_presence = async (presence: Presence) => {
     const image_blob = await image_response.blob();
     const image_buffer = Buffer.from(await image_blob.arrayBuffer());
 
-    // get vibrant color
+    // get dominant color
     const palette = await Vibrant.from(image_buffer).getPalette();
-    const swatch = palette.Vibrant || palette.LightVibrant || palette.DarkVibrant || palette.Muted;
 
-    if (!swatch) {
+    // collect all valid swatches
+    const swatches = [
+        palette.Vibrant,
+        palette.LightVibrant,
+        palette.DarkVibrant,
+        palette.Muted,
+        palette.LightMuted,
+        palette.DarkMuted,
+    ].filter((swatch) => swatch !== null);
+
+    if (swatches.length === 0) {
         console.log("No vibrant color found in album art.");
         return;
     }
+
+    // choose the best swatch by weighting population and saturation
+    const swatch = swatches.reduce((best, current) => {
+        if (current === null) {
+            return best!;
+        }
+
+        if (best === null) {
+            return current;
+        }
+
+        const best_score = best.population * (best.hsl[1] * 0.5 + 0.5);
+        const current_score = current.population * (current.hsl[1] * 0.5 + 0.5);
+        return current_score > best_score ? current : best;
+    });
 
     let {r, g, b} = swatch;
 
