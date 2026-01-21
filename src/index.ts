@@ -7,6 +7,7 @@ const BRIGHTNESS_SCALE = process.env.BRIGHTNESS_SCALE ? parseFloat(process.env.B
 const RED_SCALE = process.env.RED_SCALE ? parseFloat(process.env.RED_SCALE) : 1.0;
 const GREEN_SCALE = process.env.GREEN_SCALE ? parseFloat(process.env.GREEN_SCALE) : 1.0;
 const BLUE_SCALE = process.env.BLUE_SCALE ? parseFloat(process.env.BLUE_SCALE) : 1.0;
+// TODO: option to make this reduce dynamic range rather than just scale down, some bulbs overcontribute blue when present, but when barely present it will not be blue enough if just cutting down brightness
 
 if (!process.env.BOT_TOKEN) {
     throw new Error("Missing BOT_TOKEN in environment variables");
