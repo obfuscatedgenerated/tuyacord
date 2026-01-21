@@ -82,6 +82,8 @@ client.on("presenceUpdate", (old_presence, new_presence) => {
     handle_presence(new_presence);
 });
 
+let last_activity_timestamp: number | null = null;
+
 const handle_presence = async (presence: Presence) => {
     // find spotify activity
     // TODO: pull from other art assets too, using priority system if multiple exist at once. create handlers for different services as overrides
@@ -92,6 +94,13 @@ const handle_presence = async (presence: Presence) => {
     if (!spotify_activity) {
         return;
     }
+
+    // avoid duplicate processing
+    if (last_activity_timestamp && last_activity_timestamp === spotify_activity.createdTimestamp) {
+        return;
+    }
+
+    last_activity_timestamp = spotify_activity.createdTimestamp;
 
     console.log(`\nUser is listening to: ${spotify_activity.details} by ${spotify_activity.state}`);
 
