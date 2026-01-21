@@ -1,12 +1,12 @@
 import "dotenv/config";
 
 // reduce brightness to avoid being overpowering
-const BRIGHTNESS_SCALE = 0.5;
+const BRIGHTNESS_SCALE = process.env.BRIGHTNESS_SCALE ? parseFloat(process.env.BRIGHTNESS_SCALE) : 1.0;
 
 // adjust color channels to fix biases in your bulb
-const RED_SCALE = 1.0;
-const GREEN_SCALE = 1.0;
-const BLUE_SCALE = 1.0;
+const RED_SCALE = process.env.RED_SCALE ? parseFloat(process.env.RED_SCALE) : 1.0;
+const GREEN_SCALE = process.env.GREEN_SCALE ? parseFloat(process.env.GREEN_SCALE) : 1.0;
+const BLUE_SCALE = process.env.BLUE_SCALE ? parseFloat(process.env.BLUE_SCALE) : 1.0;
 
 if (!process.env.BOT_TOKEN) {
     throw new Error("Missing BOT_TOKEN in environment variables");
