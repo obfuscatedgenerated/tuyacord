@@ -1,6 +1,12 @@
 import "dotenv/config";
 
+// reduce brightness to avoid being overpowering
 const BRIGHTNESS_SCALE = 0.5;
+
+// adjust color channels to fix biases in your bulb
+const RED_SCALE = 1.0;
+const GREEN_SCALE = 1.0;
+const BLUE_SCALE = 1.0;
 
 if (!process.env.BOT_TOKEN) {
     throw new Error("Missing BOT_TOKEN in environment variables");
@@ -111,9 +117,14 @@ const handle_presence = async (presence: Presence) => {
         return;
     }
 
-    const {r, g, b} = swatch;
+    let {r, g, b} = swatch;
 
     console.log(`Dominant color: R:${r} G:${g} B:${b}`);
+
+    // apply color channel scales
+    r = Math.min(255, Math.round(r * RED_SCALE));
+    g = Math.min(255, Math.round(g * GREEN_SCALE));
+    b = Math.min(255, Math.round(b * BLUE_SCALE));
 
     // convert to hsv
     let [h, s, v] = convert.rgb.hsv(r, g, b);
