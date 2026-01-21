@@ -1,3 +1,6 @@
+// recycled from another project, i believe this came from a web resource on the tuya site but i cant track it down
+// either way its a little messy, but actually works for EU, i can't get tuyapi on npm to work
+
 const config = {
     host: 'https://openapi.tuyaeu.com',
     accessKey: '',

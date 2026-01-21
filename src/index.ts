@@ -1,7 +1,6 @@
 import "dotenv/config";
 
-const MIN_BRIGHTNESS = 10;
-const MAX_BRIGHTNESS = 1000;
+const BRIGHTNESS_SCALE = 0.5;
 
 if (!process.env.BOT_TOKEN) {
     throw new Error("Missing BOT_TOKEN in environment variables");
@@ -15,7 +14,7 @@ if (!process.env.TUYA_ACCESS_ID || !process.env.TUYA_KEY || !process.env.TUYA_DE
     throw new Error("Missing Tuya credentials in environment variables");
 }
 
-import sharp from "sharp";
+import { Vibrant } from "node-vibrant/node";
 import convert from "color-convert";
 
 import {configureTuya, sendCommands} from "./tuya";
@@ -103,13 +102,16 @@ const handle_presence = async (presence: Presence) => {
     const image_blob = await image_response.blob();
     const image_buffer = Buffer.from(await image_blob.arrayBuffer());
 
-    // get dominant color from image
-    const image = sharp(image_buffer);
-    const {dominant} = await image.stats();
+    // get vibrant color
+    const palette = await Vibrant.from(image_buffer).getPalette();
+    const swatch = palette.Vibrant || palette.LightVibrant || palette.DarkVibrant || palette.Muted;
 
-    const r = Math.round(dominant.r);
-    const g = Math.round(dominant.g);
-    const b = Math.round(dominant.b);
+    if (!swatch) {
+        console.log("No vibrant color found in album art.");
+        return;
+    }
+
+    const {r, g, b} = swatch;
 
     console.log(`Dominant color: R:${r} G:${g} B:${b}`);
 
@@ -120,8 +122,8 @@ const handle_presence = async (presence: Presence) => {
     s = Math.round(s * 10);
     v = Math.round(v * 10);
 
-    // clamp v to min and max brightness
-    v = Math.max(MIN_BRIGHTNESS * 10, Math.min(MAX_BRIGHTNESS * 10, v));
+    // apply brightness scale
+    v = Math.round(v * BRIGHTNESS_SCALE);
 
     console.log(`HSV: H:${h} S:${s} V:${v}`);
 
