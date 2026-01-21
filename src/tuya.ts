@@ -60,6 +60,8 @@ async function getToken() {
     token = login.result.access_token;
 }
 
+// TODO: handle token refresh
+
 async function encryptStr(str: string, secret: string) {
     const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
     const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(str));
