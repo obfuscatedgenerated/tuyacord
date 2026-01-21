@@ -1,6 +1,6 @@
 # Tuyacord
 
-Make your Tuya controlled lights react in real time to your playing Spotify music!
+Make your Tuya controlled lights react in real time to your music playing on Spotify!
 
 ## Setup
 
@@ -13,7 +13,7 @@ Please note that the instructions for Tuya are non-specific due to frequent chan
    cd tuyacord
    pnpm install
    ```
-2. Create a new [Discord Application](https://discord.com/developers/applications) and add a bot to it. Invite the bot to a server where you and the bot are both members. No permissions are needed, just a bot scope invite: `https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot`
+2. Create a new [Discord Application](https://discord.com/developers/applications) and add a bot to it. **Enable the Presence Intent**. Invite the bot to a server where you and the bot are both members. No permissions are needed, just a bot scope invite: `https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot`
 3. Set up a Tuya IoT Platform project with an IoT Core enrollment.
 4. Copy `.env.example` to `.env` and fill in the required environment variables.
 5. Run the application:
